@@ -1,0 +1,523 @@
+﻿<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Unity 代码参考 / Unity Code Reference</title>
+<style>
+:root{
+  --bg:#fafafa;--surface:#fff;--border:#e8e8e8;--text:#333;--muted:#888;
+  --accent:#333;--accent-hover:#000;
+  --kw:#c678dd;--tp:#d19a66;--st:#98c379;--cm:#a0a0a0;--fn:#61afef;--nu:#d19a66;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter','Segoe UI','Yu Gothic','Noto Sans JP',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;font-size:15px;-webkit-font-smoothing:antialiased}
+header{max-width:800px;margin:60px auto 0;padding:0 24px;text-align:center}
+header h1{font-size:2em;font-weight:700;letter-spacing:-.02em;color:#111}
+header p{color:var(--muted);font-size:.9em;margin-top:6px}
+nav{max-width:800px;margin:28px auto 0;padding:0 24px;display:flex;gap:0;justify-content:center;border-bottom:1px solid var(--border)}
+nav button{padding:10px 22px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:.88em;font-weight:500;border-bottom:2px solid transparent;margin-bottom:-1px;transition:.18s}
+nav button:hover{color:var(--accent-hover)}
+nav button.active{color:#111;border-bottom-color:#111}
+main{max-width:800px;margin:0 auto;padding:32px 24px 48px}
+section{display:none;animation:fade .25s}section.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+h2{font-size:1.2em;font-weight:600;color:#111;margin:0 0 20px;letter-spacing:-.01em}
+.card{margin:0 0 32px}
+.card h4{font-size:.9em;font-weight:600;color:#111;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+pre{background:#f5f5f5;border:1px solid var(--border);border-radius:8px;padding:18px 20px;overflow-x:auto;font-size:.82em;line-height:1.65}
+code{font-family:'SF Mono','Cascadia Code','Fira Code','JetBrains Mono',Consolas,monospace;font-size:.92em}
+.cm{color:var(--cm);font-style:italic}.kw{color:var(--kw)}.tp{color:var(--tp)}.st{color:var(--st)}.fn{color:var(--fn)}.nu{color:var(--nu)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+footer{text-align:center;padding:32px 24px 48px;color:var(--muted);font-size:.8em}
+.badge{display:inline-block;padding:1px 7px;background:#eee;color:var(--muted);border-radius:3px;font-size:.72em;font-weight:500;letter-spacing:.04em;text-transform:uppercase}
+.ja-only,.zh-only{transition:opacity .15s}
+</style></head><body>
+<header>
+<h1>シンプルジャンプゲーム / 简单的跳跃游戏</h1>
+<p>コードリファレンス / 代码参考 · 中日双语注释</p>
+<div style="margin-top:12px;display:flex;align-items:center;justify-content:center;gap:8px">
+  <span style="font-size:.82em;color:var(--muted)">注释语言:</span>
+  <button id="lang-zh" style="padding:4px 12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer;font-size:.8em">中文</button>
+  <button id="lang-ja" style="padding:4px 12px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);cursor:pointer;font-size:.8em">日本語</button>
+</div>
+</header>
+<nav id="nav">
+<button class="active" data-section="game">スクリプト / 游戏脚本</button>
+<button data-section="basics">基礎 / Unity 基础</button>
+<button data-section="patterns">パターン / 常用模式</button>
+<button data-section="tools">ツール / 工具</button>
+</nav>
+<main>
+<section id="game" class="active">
+<h2>ゲームスクリプト / 游戏脚本</h2>
+<p style="color:var(--muted);margin-bottom:16px">project: シンプルジャンプゲーム / 简单的跳跃游戏 · Unity 6000 (URP 2D) · 3Dプラットフォーマー / 3D 平台跳跃</p>
+
+<div class="card"><h4>SquareController <span class="badge">プレイヤー / 玩家</span></h4>
+<pre><code><span class="cm">// SquareController.cs - プレイヤーコントローラー / 玩家控制器
+// WASD movement + jump + auto-bounce + custom gravity</span>
+<span class="kw">public class</span> <span class="tp">SquareController</span> : <span class="tp">MonoBehaviour</span>
+{
+    <span class="kw">public float</span> moveSpeed = <span class="nu">8f</span>;           <span class="cm">// 移動速度 / 移速</span>
+    <span class="kw">public float</span> jumpForce = <span class="nu">10f</span>;          <span class="cm">// ジャンプ力 / 跳跃力</span>
+    <span class="kw">public float</span> gravityScale = <span class="nu">2.5f</span>;       <span class="cm">// 上升重力 / 上升时重力倍率</span>
+    <span class="kw">public float</span> fallGravityScale = <span class="nu">5f</span>;    <span class="cm">// 下降重力 / 下落时重力倍率</span>
+    <span class="kw">public bool</span> autoBounce = <span class="kw">true</span>;         <span class="cm">// 自动弹跳 / 自動バウンス</span>
+    <span class="kw">private</span> <span class="tp">Rigidbody</span> rb; <span class="kw">private bool</span> grounded;
+    <span class="kw">void</span> <span class="fn">Start</span>() { rb = GetComponent&lt;<span class="tp">Rigidbody</span>&gt;(); }
+    <span class="kw">void</span> <span class="fn">Update</span>() {
+        <span class="kw">float</span> h = <span class="tp">Input</span>.GetAxis(<span class="st">"Horizontal"</span>);
+        rb.linearVelocity = <span class="kw">new</span> <span class="tp">Vector3</span>(h*moveSpeed, rb.linearVelocity.y, <span class="nu">0</span>);
+        <span class="kw">if</span> (grounded && <span class="tp">Input</span>.GetButtonDown(<span class="st">"Jump"</span>)) {
+            rb.linearVelocity = <span class="kw">new</span> <span class="tp">Vector3</span>(rb.linearVelocity.x, jumpForce, <span class="nu">0</span>);
+            grounded = <span class="kw">false</span>;
+        }
+        <span class="kw">float</span> g = rb.linearVelocity.y &gt; <span class="nu">0</span> ? gravityScale : fallGravityScale;
+        rb.AddForce(<span class="tp">Physics</span>.gravity * (g - <span class="nu">1f</span>), <span class="tp">ForceMode</span>.Acceleration);
+        <span class="kw">if</span> (!grounded) transform.Rotate(<span class="nu">0</span>,<span class="nu">0</span>,<span class="nu">360</span>*<span class="tp">Time</span>.deltaTime);
+    }
+    <span class="kw">void</span> <span class="fn">OnCollisionEnter</span>(<span class="tp">Collision</span> c) {
+        <span class="kw">foreach</span> (<span class="kw">var</span> p <span class="kw">in</span> c.contacts)
+            <span class="kw">if</span> (p.normal.y &gt; <span class="nu">0.5f</span>) {
+                grounded = <span class="kw">true</span>;
+                <span class="kw">if</span> (autoBounce) rb.linearVelocity = <span class="kw">new</span> <span class="tp">Vector3</span>(rb.linearVelocity.x, jumpForce*<span class="nu">0.8f</span>, <span class="nu">0</span>);
+            }
+    }
+}</code></pre></div>
+
+<div class="card"><h4>PlatformGenerator <span class="badge">プラットフォーム / 平台</span></h4>
+<pre><code><span class="cm">// PlatformGenerator.cs - 程序化平台生成 / ランダム足場生成
+// 随机生成平台、陷阱、斜坡 / 通常足場・トラップ・坂道</span>
+<span class="kw">public class</span> <span class="tp">PlatformGenerator</span> : <span class="tp">MonoBehaviour</span>
+{
+    <span class="kw">public bool</span> isInfiniteMode, isHardMode;
+    <span class="kw">public</span> <span class="tp">Transform</span> floorTile, topTile, leftWall, rightWall, player;
+
+    <span class="kw">public int</span> rowCount = <span class="nu">5</span>;
+    <span class="kw">public int</span> platformsPerRowMin = <span class="nu">2</span>, platformsPerRowMax = <span class="nu">2</span>;
+    <span class="kw">public float</span> platformWidthMin = <span class="nu">2f</span>, platformWidthMax = <span class="nu">5f</span>;
+    <span class="kw">public</span> <span class="tp">Color</span> platformColor;
+
+    <span class="kw">public float</span> trapChance = <span class="nu">0.15f</span>;       <span class="cm">// 陷阱概率 / トラップ確率</span>
+    <span class="kw">public float</span> trapDestroyDelay = <span class="nu">0.3f</span>;  <span class="cm">// 销毁延迟 / 破壊遅延</span>
+    <span class="kw">public</span> <span class="tp">Color</span> trapColor;
+    <span class="kw">public float</span> slopeChance = <span class="nu">0.2f</span>;       <span class="cm">// 斜坡概率 / 坂道確率</span>
+    <span class="kw">public</span> <span class="tp">Color</span> slopeColor;
+    <span class="kw">public int</span> generationRange = <span class="nu">10</span>;       <span class="cm">// 生成范围(向上) / 生成範囲(上)</span>
+
+    <span class="kw">public void</span> <span class="fn">Generate</span>() {
+        ClearPlatforms();
+        <span class="tp">Shader</span> s = <span class="tp">Shader</span>.Find(<span class="st">"Universal Render Pipeline/Unlit"</span>);
+        <span class="kw">for</span> (<span class="kw">int</span> r=<span class="nu">0</span>; r&lt;rowCount; r++) {
+            <span class="kw">float</span> y = <span class="tp">Mathf</span>.Lerp(floorY,topY,(<span class="kw">float</span>)(r+<span class="nu">1</span>)/(rowCount+<span class="nu">1</span>));
+            CreateRow(y, r, <span class="tp">Random</span>.Range(platformsPerRowMin, platformsPerRowMax+<span class="nu">1</span>));
+        }
+    }
+    <span class="tp">GameObject</span> <span class="fn">CreatePlatform</span>(<span class="kw">float</span> x,<span class="kw">float</span> y,<span class="kw">float</span> w,<span class="tp">Material</span> m) {
+        <span class="kw">var</span> p = <span class="tp">GameObject</span>.CreatePrimitive(<span class="tp">PrimitiveType</span>.Cube);
+        p.transform.SetParent(transform);
+        p.transform.localPosition = <span class="kw">new</span> <span class="tp">Vector3</span>(x,y,<span class="nu">0</span>);
+        p.transform.localScale = <span class="kw">new</span> <span class="tp">Vector3</span>(w,<span class="nu">0.3f</span>,<span class="nu">2f</span>);
+        p.GetComponent&lt;<span class="tp">MeshRenderer</span>&gt;().sharedMaterial = m;
+        <span class="kw">return</span> p;
+    }
+    <span class="tp">Material</span> <span class="fn">MakeMaterial</span>(<span class="tp">Shader</span> s, <span class="tp">Color</span> c) {
+        <span class="kw">var</span> m = <span class="kw">new</span> <span class="tp">Material</span>(s); m.color = c; <span class="kw">return</span> m;
+    }
+}</code></pre></div>
+
+<div class="card"><h4>GameUI <span class="badge">UI管理 / UIマネージャー</span></h4>
+<pre><code><span class="cm">// GameUI.cs - UI + 游戏管理器 / UI + ゲーム管理
+// 动态创建UI、计时器、模式选择、重启 / 動的UI生成・タイマー・モード選択</span>
+<span class="kw">public class</span> <span class="tp">GameUI</span> : <span class="tp">MonoBehaviour</span>
+{
+    <span class="kw">public static</span> <span class="tp">GameMode</span> selectedMode = <span class="tp">GameMode</span>.Classic;
+    <span class="kw">public enum</span> <span class="tp">GameMode</span> { Classic, Hard, Infinite }
+
+    <span class="kw">private</span> <span class="tp">Text</span> timerText, scoreText, resultText, versionText;
+    <span class="kw">private</span> <span class="tp">Font</span> uiFont;
+    <span class="kw">const string</span> VERSION = <span class="st">"v7"</span>;
+
+    <span class="kw">void</span> <span class="fn">Start</span>() {
+        uiFont = <span class="tp">Resources</span>.Load&lt;<span class="tp">Font</span>&gt;(<span class="st">"Fonts/NotoSansJP"</span>);
+        <span class="cm">// WebGL: Resources.Loadを使う / WebGL: 必须用 Resources.Load</span>
+        CreateUI();
+    }
+    <span class="kw">void</span> <span class="fn">CreateUI</span>() {
+        <span class="cm">// Ensure EventSystem / EventSystem確保</span>
+        <span class="kw">if</span> (<span class="tp">FindFirstObjectByType</span>&lt;<span class="tp">EventSystem</span>&gt;() == <span class="kw">null</span>) {
+            <span class="kw">var</span> e = <span class="kw">new</span> <span class="tp">GameObject</span>(<span class="st">"EventSystem"</span>);
+            e.AddComponent&lt;<span class="tp">EventSystem</span>&gt;();
+            e.AddComponent&lt;<span class="tp">InputSystemUIInputModule</span>&gt;();
+        }
+        <span class="cm">// Create Canvas / 画布作成</span>
+        <span class="kw">var</span> c = <span class="kw">new</span> <span class="tp">GameObject</span>(<span class="st">"Canvas"</span>).AddComponent&lt;<span class="tp">Canvas</span>&gt;();
+        c.renderMode = <span class="tp">RenderMode</span>.ScreenSpaceOverlay;
+        c.gameObject.AddComponent&lt;<span class="tp">CanvasScaler</span>&gt;();
+        <span class="cm">// Timer (top-right) / タイマー (右上)</span>
+        timerText = CreateText(c, <span class="st">"00:00.00"</span>, <span class="nu">28</span>, <span class="tp">TextAnchor</span>.UpperRight);
+        <span class="cm">// Score (top-left) / スコア (左上)</span>
+        scoreText = CreateText(c, <span class="st">"高さ: 0"</span>, <span class="nu">28</span>, <span class="tp">TextAnchor</span>.UpperLeft);
+        <span class="cm">// Version (bottom-right) / バージョン (右下)</span>
+        versionText = CreateText(c, VERSION, <span class="nu">16</span>, <span class="tp">TextAnchor</span>.LowerRight);
+    }
+    <span class="kw">void</span> <span class="fn">SetFont</span>(<span class="tp">Text</span> t) { <span class="kw">if</span> (t && uiFont) t.font = uiFont; }
+}</code></pre></div>
+
+<div class="card"><h4>CameraFollow + GoalTrigger + TrapPlatform</h4>
+<pre><code><span class="cm">// CameraFollow.cs - 相机跟随 / カメラ追従</span>
+<span class="kw">public class</span> <span class="tp">CameraFollow</span> : <span class="tp">MonoBehaviour</span> {
+    <span class="kw">public</span> <span class="tp">Transform</span> target; <span class="kw">public float</span> smoothTime = <span class="nu">0.3f</span>;
+    <span class="kw">public bool</span> useBounds = <span class="kw">true</span>, infiniteMode; <span class="kw">public float</span> minX,maxX,minY,maxY;
+    <span class="kw">private</span> <span class="tp">Vector3</span> vel;
+    <span class="kw">void</span> <span class="fn">LateUpdate</span>() {
+        <span class="kw">if</span> (!target) <span class="kw">return</span>;
+        <span class="kw">var</span> tp = target.position;
+        <span class="kw">if</span> (useBounds) { tp.x=<span class="tp">Mathf</span>.Clamp(tp.x,minX,maxX); <span class="kw">if</span>(!infiniteMode) tp.y=<span class="tp">Mathf</span>.Clamp(tp.y,minY,maxY); }
+        transform.position = <span class="tp">Vector3</span>.SmoothDamp(transform.position, <span class="kw">new</span> <span class="tp">Vector3</span>(tp.x,tp.y,transform.position.z), <span class="kw">ref</span> vel, smoothTime);
+    }
+}
+<span class="cm">// GoalTrigger.cs - 通关检测 / クリア判定</span>
+<span class="kw">public class</span> <span class="tp">GoalTrigger</span> : <span class="tp">MonoBehaviour</span> {
+    <span class="kw">void</span> <span class="fn">OnTriggerEnter</span>(<span class="tp">Collider</span> o) { <span class="kw">if</span>(o.CompareTag(<span class="st">"Player"</span>)) <span class="tp">FindAnyObjectByType</span>&lt;<span class="tp">GameUI</span>&gt;()?.ReachGoal(); }
+}
+<span class="cm">// TrapPlatform.cs - 陷阱平台 / トラップ足場</span>
+<span class="kw">public class</span> <span class="tp">TrapPlatform</span> : <span class="tp">MonoBehaviour</span> {
+    <span class="kw">public float</span> destroyDelay = <span class="nu">0.3f</span>;
+    <span class="kw">void</span> <span class="fn">OnCollisionEnter</span>(<span class="tp">Collision</span> c) { <span class="kw">if</span>(c.gameObject.CompareTag(<span class="st">"Player"</span>)) Destroy(gameObject, destroyDelay); }
+}</code></pre></div>
+</section>
+
+<section id="basics">
+<h2>Unity 基礎 / Unity 基础</h2>
+<div class="grid">
+
+<div class="card"><h4>ライフサイクル / 生命周期</h4>
+<pre><code><span class="kw">void</span> <span class="fn">Awake</span>()    {} <span class="cm">// 对象创建时(最早) / 生成時(最初)</span>
+<span class="kw">void</span> <span class="fn">Start</span>()    {} <span class="cm">// 首帧前 / 初回フレーム前</span>
+<span class="kw">void</span> <span class="fn">Update</span>()   {} <span class="cm">// 每帧 / 毎フレーム</span>
+<span class="kw">void</span> <span class="fn">FixedUpdate</span>(){} <span class="cm">// 固定物理间隔 / 物理更新</span>
+<span class="kw">void</span> <span class="fn">LateUpdate</span>() {} <span class="cm">// Update后(相机用) / Update後</span>
+<span class="kw">void</span> <span class="fn">OnEnable</span>()  {} <span class="cm">// 启用时 / 有効化時</span>
+<span class="kw">void</span> <span class="fn">OnDisable</span>() {} <span class="cm">// 禁用时 / 無効化時</span>
+<span class="kw">void</span> <span class="fn">OnDestroy</span>() {} <span class="cm">// 销毁时 / 破棄時</span></code></pre></div>
+
+<div class="card"><h4>Input (Legacy / 旧输入)</h4>
+<pre><code><span class="kw">float</span> h = <span class="tp">Input</span>.GetAxis(<span class="st">"Horizontal"</span>);  <span class="cm">// -1〜1 / -1~1</span>
+<span class="kw">float</span> v = <span class="tp">Input</span>.GetAxis(<span class="st">"Vertical"</span>);    <span class="cm">// -1〜1 / -1~1</span>
+<span class="kw">bool</span> j = <span class="tp">Input</span>.GetButtonDown(<span class="st">"Jump"</span>);   <span class="cm">// 押した瞬間 / 按下瞬间</span>
+<span class="kw">bool</span> f = <span class="tp">Input</span>.GetButton(<span class="st">"Fire1"</span>);       <span class="cm">// 長押し中 / 持续按住</span>
+<span class="kw">if</span> (<span class="tp">Input</span>.GetKeyDown(<span class="tp">KeyCode</span>.Escape)) {} <span class="cm">// ESCキー / ESC键</span>
+<span class="tp">Input</span>.GetMouseButtonDown(<span class="nu">0</span>);            <span class="cm">// 左键 / 左クリック</span></code></pre></div>
+
+<div class="card"><h4>InputSystem (New / 新输入)</h4>
+<pre><code><span class="cm">// パッケージ: com.unity.inputsystem / 包名: com.unity.inputsystem</span>
+<span class="kw">using</span> <span class="tp">UnityEngine.InputSystem</span>;
+<span class="kw">void</span> <span class="fn">Update</span>() {
+    <span class="kw">if</span> (<span class="tp">Keyboard</span>.current.wKey.isPressed) {}
+    <span class="kw">if</span> (<span class="tp">Keyboard</span>.current.spaceKey.wasPressedThisFrame) {}
+    <span class="kw">if</span> (<span class="tp">Keyboard</span>.current.escapeKey.wasPressedThisFrame) {}
+}</code></pre></div>
+
+<div class="card"><h4>Transform / 变换</h4>
+<pre><code>t.position = <span class="kw">new</span> <span class="tp">Vector3</span>(x, y, z);
+t.rotation = <span class="tp">Quaternion</span>.Euler(<span class="nu">0</span>,<span class="nu">90</span>,<span class="nu">0</span>);
+t.localScale = <span class="kw">new</span> <span class="tp">Vector3</span>(<span class="nu">2</span>,<span class="nu">1</span>,<span class="nu">1</span>);
+t.Translate(<span class="tp">Vector3</span>.forward * s * dt); <span class="cm">// 移動 / 移动</span>
+t.Rotate(<span class="nu">0</span>, a*dt, <span class="nu">0</span>);                <span class="cm">// 回転 / 旋转</span>
+t.LookAt(target);                       <span class="cm">// 方向 / 朝向</span>
+t.SetParent(p);                         <span class="cm">// 親オブジェクト / 设置父级</span></code></pre></div>
+
+<div class="card"><h4>Rigidbody / 刚体物理</h4>
+<pre><code><span class="kw">private</span> <span class="tp">Rigidbody</span> rb;
+<span class="kw">void</span> <span class="fn">Start</span>() { rb = GetComponent&lt;<span class="tp">Rigidbody</span>&gt;(); }
+rb.linearVelocity = <span class="kw">new</span> <span class="tp">Vector3</span>(x,y,z);   <span class="cm">// 直接速度設定 / 直接设速度</span>
+rb.AddForce(<span class="tp">Vector3</span>.up*f, <span class="tp">ForceMode</span>.Impulse); <span class="cm">// 瞬間的な力 / 瞬间力</span>
+rb.AddForce(<span class="tp">Physics</span>.gravity*s, <span class="tp">ForceMode</span>.Acceleration); <span class="cm">// カスタム重力 / 自定义重力</span>
+rb.isKinematic = <span class="kw">true</span>;   <span class="cm">// 物理無視 / 忽略物理</span>
+rb.constraints = <span class="tp">RigidbodyConstraints</span>.FreezeRotation; <span class="cm">// 回転固定 / 冻结旋转</span></code></pre></div>
+
+<div class="card"><h4>Collision & Trigger / 碰撞触发</h4>
+<pre><code><span class="cm">// 碰撞(有物理反馈) / 衝突(物理あり)</span>
+<span class="kw">void</span> <span class="fn">OnCollisionEnter</span>(<span class="tp">Collision</span> c) {}
+<span class="kw">void</span> <span class="fn">OnCollisionExit</span>(<span class="tp">Collision</span> c)  {}
+<span class="cm">// 触发器(无物理) / トリガー(物理なし)</span>
+<span class="kw">void</span> <span class="fn">OnTriggerEnter</span>(<span class="tp">Collider</span> o) {}
+<span class="kw">void</span> <span class="fn">OnTriggerExit</span>(<span class="tp">Collider</span> o)  {}
+<span class="cm">// 按标签判断 / タグ判定</span>
+<span class="kw">if</span> (o.CompareTag(<span class="st">"Player"</span>)) {}
+<span class="cm">// 按层判断 / レイヤー判定</span>
+<span class="kw">if</span> (o.gameObject.layer == <span class="tp">LayerMask</span>.NameToLayer(<span class="st">"Enemy"</span>)) {}</code></pre></div>
+
+<div class="card"><h4>GameObject 操作 / 对象操作</h4>
+<pre><code><span class="cm">// 实例化 / 生成</span>
+Instantiate(prefab, pos, rot);
+Instantiate(prefab, parent);   <span class="cm">// 親付き / 带父级</span>
+<span class="cm">// 検索 / 查找 (新API推奨)</span>
+<span class="tp">FindAnyObjectByType</span>&lt;T&gt;();     <span class="cm">// 任意のインスタンス / 任意实例</span>
+<span class="tp">FindFirstObjectByType</span>&lt;T&gt;();  <span class="cm">// ソート後最初 / 排序后首个</span>
+GetComponent&lt;T&gt;();             <span class="cm">// 自身のコンポーネント / 自身组件</span>
+GetComponentInChildren&lt;T&gt;();   <span class="cm">// 子含む / 含子对象</span>
+<span class="cm">// 破棄 / 销毁</span>
+Destroy(obj);
+Destroy(obj, <span class="nu">3f</span>);              <span class="cm">// 3秒後に破棄 / 延迟3秒销毁</span>
+obj.SetActive(<span class="kw">true</span>);           <span class="cm">// 有効/無効 / 激活/非激活</span></code></pre></div>
+
+<div class="card"><h4>动态创建 UI / 動的UI生成</h4>
+<pre><code><span class="cm">// Canvas / 画布</span>
+<span class="kw">var</span> c = <span class="kw">new</span> <span class="tp">GameObject</span>(<span class="st">"Canvas"</span>).AddComponent&lt;<span class="tp">Canvas</span>&gt;();
+c.renderMode = <span class="tp">RenderMode</span>.ScreenSpaceOverlay;
+c.gameObject.AddComponent&lt;<span class="tp">CanvasScaler</span>&gt;();
+c.gameObject.AddComponent&lt;<span class="tp">GraphicRaycaster</span>&gt;();
+<span class="cm">// Text / 文本</span>
+<span class="kw">var</span> t = <span class="kw">new</span> <span class="tp">GameObject</span>(<span class="st">"Label"</span>).AddComponent&lt;<span class="tp">Text</span>&gt;();
+t.font = myFont; <span class="cm">// WebGL: Resources.Loadが必須 / WebGL: 必须用 Resources.Load</span>
+t.fontSize = <span class="nu">28</span>; t.color = <span class="tp">Color</span>.black; t.text = <span class="st">"Hello"</span>;
+t.transform.SetParent(canvas.transform, <span class="kw">false</span>);
+<span class="cm">// Button / 按钮</span>
+<span class="kw">var</span> b = obj.AddComponent&lt;<span class="tp">Button</span>&gt;();
+b.onClick.AddListener(() =&gt; { <span class="cm">/* コールバック / 回调 */</span> });</code></pre></div>
+
+<div class="card"><h4>Resources.Load / 资源加载</h4>
+<pre><code><span class="cm">// 文件放在 Assets/Resources/ 下 / Resourcesフォルダに配置</span>
+<span class="kw">var</span> font = <span class="tp">Resources</span>.Load&lt;<span class="tp">Font</span>&gt;(<span class="st">"Fonts/MyFont"</span>);
+<span class="kw">var</span> prefab = <span class="tp">Resources</span>.Load&lt;<span class="tp">GameObject</span>&gt;(<span class="st">"Prefabs/Enemy"</span>);
+<span class="kw">var</span> tex = <span class="tp">Resources</span>.Load&lt;<span class="tp">Texture2D</span>&gt;(<span class="st">"Textures/Icon"</span>);
+<span class="cm">// WebGL 注意事项 / WebGL注意:
+// GetBuiltinResource 不可用! 务必用 Resources.Load
+// NotoSansJP 适合日文/中文 / 日本語対応</span></code></pre></div>
+
+<div class="card"><h4>Coroutine / 协程</h4>
+<pre><code><span class="kw">void</span> <span class="fn">Start</span>() { StartCoroutine(Routine()); }
+<span class="kw">IEnumerator</span> <span class="fn">Routine</span>() {
+    <span class="kw">yield return</span> <span class="kw">new</span> WaitForSeconds(<span class="nu">2f</span>); <span class="cm">// 2秒待つ / 等待2秒</span>
+    <span class="kw">yield return</span> <span class="kw">new</span> WaitForEndOfFrame();  <span class="cm">// フレーム終了時 / 帧末</span>
+    <span class="kw">yield return null</span>;                     <span class="cm">// 次のフレーム / 下一帧</span>
+}
+StopCoroutine(<span class="st">"Routine"</span>); StopAllCoroutines();</code></pre></div>
+
+<div class="card"><h4>Scene Management / 场景</h4>
+<pre><code><span class="kw">using</span> <span class="tp">UnityEngine.SceneManagement</span>;
+<span class="cm">// リロード / 重载当前场景</span>
+<span class="tp">SceneManager</span>.LoadScene(<span class="tp">SceneManager</span>.GetActiveScene().buildIndex);
+<span class="cm">// シーン名指定 / 按名称加载</span>
+<span class="tp">SceneManager</span>.LoadScene(<span class="st">"Level2"</span>);
+<span class="cm">// 非同期ロード / 异步加载</span>
+<span class="kw">var</span> op = <span class="tp">SceneManager</span>.LoadSceneAsync(<span class="st">"Level2"</span>);
+op.allowSceneActivation = <span class="kw">false</span>; <span class="cm">// 手動で切り替え / 手动切换</span></code></pre></div>
+
+<div class="card"><h4>Time / 时间控制</h4>
+<pre><code><span class="kw">float</span> dt = <span class="tp">Time</span>.deltaTime;       <span class="cm">// フレーム間隔 / 帧间隔(帧率无关)</span>
+<span class="tp">Time</span>.timeScale = <span class="nu">0f</span>;              <span class="cm">// 一時停止 / 暂停</span>
+<span class="tp">Time</span>.timeScale = <span class="nu">1f</span>;              <span class="cm">// 通常速度 / 正常速度</span>
+<span class="tp">Time</span>.fixedDeltaTime;             <span class="cm">// 物理更新間隔 / 物理间隔</span>
+<span class="kw">float</span> t = <span class="tp">Time</span>.time;              <span class="cm">// 経過時間 / 游戏运行时间</span></code></pre></div>
+
+</div>
+</section>
+
+<section id="patterns">
+<h2>よく使うパターン / 常用模式</h2>
+
+<div class="card"><h4>Singleton / 单例 / シングルトン</h4>
+<pre><code><span class="kw">public class</span> <span class="tp">GameManager</span> : <span class="tp">MonoBehaviour</span> {
+    <span class="kw">public static</span> <span class="tp">GameManager</span> Instance { <span class="kw">get</span>; <span class="kw">private set</span>; }
+    <span class="kw">void</span> <span class="fn">Awake</span>() {
+        <span class="cm">// 重複防止・シーン跨ぎ / 防重复·跨场景保留</span>
+        <span class="kw">if</span> (Instance && Instance != <span class="kw">this</span>) { Destroy(gameObject); <span class="kw">return</span>; }
+        Instance = <span class="kw">this</span>; DontDestroyOnLoad(gameObject);
+    }
+<span class="cm">// 使用例 / 用法: GameManager.Instance.Method();</span>
+}</code></pre></div>
+
+<div class="card"><h4>Object Pool / 对象池 / オブジェクトプール</h4>
+<pre><code><span class="kw">public class</span> <span class="tp">Pool</span>&lt;T&gt; <span class="kw">where</span> T : <span class="tp">Component</span> {
+    <span class="kw">private</span> <span class="tp">Queue</span>&lt;T&gt; q = <span class="kw">new</span>();
+    <span class="kw">public</span> T <span class="fn">Get</span>() { <span class="kw">var</span> o = q.Count&gt;<span class="nu">0</span>?q.Dequeue():Create(); o.gameObject.SetActive(<span class="kw">true</span>); <span class="kw">return</span> o; }
+    <span class="kw">public void</span> <span class="fn">Return</span>(T o) { o.gameObject.SetActive(<span class="kw">false</span>); q.Enqueue(o); }
+    T <span class="fn">Create</span>() { <span class="kw">var</span> o = Instantiate(prefab); o.gameObject.SetActive(<span class="kw">false</span>); <span class="kw">return</span> o; }
+}
+<span class="cm">// 适合子弹/特效/敌人 / 弾・エフェクト・敵に最適</span></code></pre></div>
+
+<div class="card"><h4>Event System / 事件系统 / イベント</h4>
+<pre><code><span class="kw">using</span> <span class="tp">UnityEngine.Events</span>;
+<span class="cm">// イベント宣言 / 声明事件</span>
+<span class="kw">public static</span> <span class="tp">UnityEvent</span> OnGameOver = <span class="kw">new</span>();
+<span class="kw">public static</span> <span class="tp">UnityEvent</span>&lt;<span class="kw">int</span>&gt; OnScoreChanged = <span class="kw">new</span>();
+<span class="cm">// 発火 / 触发</span>
+OnGameOver.Invoke();  OnScoreChanged.Invoke(<span class="nu">100</span>);
+<span class="cm">// 受信 / 监听</span>
+<span class="kw">void</span> <span class="fn">OnEnable</span>()  { Events.OnGameOver.AddListener(Handle); }
+<span class="kw">void</span> <span class="fn">OnDisable</span>() { Events.OnGameOver.RemoveListener(Handle); }</code></pre></div>
+
+<div class="card"><h4>State Machine / 状态机 / ステート</h4>
+<pre><code><span class="cm">// 状態一覧 / 状态枚举</span>
+<span class="kw">public enum</span> <span class="tp">State</span> { Menu, Playing, Paused, GameOver }
+<span class="kw">public</span> <span class="tp">State</span> state = <span class="tp">State</span>.Menu;
+<span class="cm">// 状態遷移 / 切换状态</span>
+<span class="kw">public void</span> <span class="fn">ChangeState</span>(<span class="tp">State</span> s) { ExitState(state); state=s; EnterState(s); }
+<span class="kw">void</span> <span class="fn">EnterState</span>(<span class="tp">State</span> s) {
+    <span class="kw">switch</span> (s) {
+        <span class="kw">case</span> <span class="tp">State</span>.Playing: <span class="tp">Time</span>.timeScale=<span class="nu">1f</span>; <span class="kw">break</span>; <span class="cm">// 再生中 / 游戏中</span>
+        <span class="kw">case</span> <span class="tp">State</span>.Paused:  <span class="tp">Time</span>.timeScale=<span class="nu">0f</span>; <span class="kw">break</span>; <span class="cm">// 一時停止 / 暂停</span>
+    }
+}</code></pre></div>
+
+<div class="card"><h4>PlayerPrefs / 存档 / セーブ</h4>
+<pre><code><span class="cm">// 保存 / セーブ</span>
+<span class="tp">PlayerPrefs</span>.SetInt(<span class="st">"HighScore"</span>, score);
+<span class="tp">PlayerPrefs</span>.SetFloat(<span class="st">"Volume"</span>, <span class="nu">0.8f</span>);
+<span class="tp">PlayerPrefs</span>.SetString(<span class="st">"Name"</span>, <span class="st">"Taro"</span>);
+<span class="cm">// 读取(默认值) / 読込(デフォルト)</span>
+<span class="kw">int</span> s = <span class="tp">PlayerPrefs</span>.GetInt(<span class="st">"HighScore"</span>, <span class="nu">0</span>);
+<span class="kw">if</span> (<span class="tp">PlayerPrefs</span>.HasKey(<span class="st">"HighScore"</span>)) {}</code></pre></div>
+
+<div class="card"><h4>Raycast / 射线 / レイ</h4>
+<pre><code><span class="tp">RaycastHit</span> hit;
+<span class="kw">if</span> (<span class="tp">Physics</span>.Raycast(pos, dir, <span class="kw">out</span> hit, <span class="nu">10f</span>)) {
+    <span class="kw">float</span> d = hit.distance;     <span class="cm">// 距離 / 距离</span>
+    <span class="kw">var</span> obj = hit.collider.gameObject; <span class="cm">// 衝突対象 / 碰撞对象</span>
+}
+<span class="cm">// レイヤーマスク / 层掩码</span>
+<span class="kw">int</span> mask = <span class="nu">1</span> &lt;&lt; <span class="tp">LayerMask</span>.NameToLayer(<span class="st">"Ground"</span>);
+<span class="kw">if</span> (<span class="tp">Physics</span>.Raycast(p,d,<span class="kw">out</span> hit,<span class="nu">10f</span>,mask)) {}
+<span class="cm">// 球体レイ / 球体射线</span>
+<span class="tp">Physics</span>.SphereCast(pos, radius, dir, <span class="kw">out</span> hit, <span class="nu">5f</span>);</code></pre></div>
+
+<div class="card"><h4>Lerp + SmoothDamp / 插值</h4>
+<pre><code><span class="cm">// 線形補間 / 线性插值</span>
+<span class="kw">float</span> f = <span class="tp">Mathf</span>.Lerp(a, b, t);
+<span class="kw">var</span> v = <span class="tp">Vector3</span>.Lerp(from, to, t);
+<span class="kw">var</span> c = <span class="tp">Color</span>.Lerp(c1, c2, t);
+<span class="cm">// スムーズ移動 / 平滑移动</span>
+<span class="kw">var</span> vel = <span class="tp">Vector3</span>.zero;
+t.position = <span class="tp">Vector3</span>.SmoothDamp(t.position, target, <span class="kw">ref</span> vel, <span class="nu">0.3f</span>);
+<span class="cm">// S字カーブ / S型缓动</span>
+<span class="kw">float</span> e = <span class="tp">Mathf</span>.SmoothStep(<span class="nu">0</span>,<span class="nu">1</span>, t);</code></pre></div>
+
+<div class="card"><h4>WebGL 发布要点 / WebGL公開</h4>
+<pre><code><span class="cm">// ① Build Settings → WebGL → Switch Platform / WebGLに切り替え
+// ② Player Settings:
+//    memorySize=256 / compression=Disabled
+// ③ よくある問題 / 常见坑:
+//    - フォント: Resources.Loadを使う / 字体: 用 Resources.Load
+//    - Shader: Always Includedに追加 / Shader: 加入防剥离
+//    - Scene: 最初のシーン = 起動シーン / 场景: 第一个场景=启动场景
+// ④ ローカルテスト / 本地测试: npx serve Build/WebGL</span></code></pre></div>
+</section>
+
+<section id="tools">
+<h2>ツール / 工具脚本</h2>
+
+<div class="card"><h4>WebGLBuilder <span class="badge">Editor</span></h4>
+<pre><code><span class="cm">// 自動ビルド: バージョン管理 + Shader保護 / 自动化构建: 版本递增 + Shader保护</span>
+<span class="kw">using</span> <span class="tp">UnityEditor</span>; <span class="kw">using</span> <span class="tp">System.Text.RegularExpressions</span>;
+<span class="kw">public static class</span> <span class="tp">WebGLBuilder</span> {
+    [<span class="tp">MenuItem</span>(<span class="st">"Tools/Build WebGL"</span>)]
+    <span class="kw">public static void</span> <span class="fn">Build</span>() {
+        <span class="cm">// ① Auto-increment version / 版本号+1</span>
+        <span class="kw">string</span> c = <span class="tp">File</span>.ReadAllText(<span class="st">"Assets/Scripts/GameUI.cs"</span>);
+        <span class="kw">var</span> m = <span class="tp">Regex</span>.Match(c, <span class="st">"VERSION\\s*=\\s*\"v(\\d+)\""</span>);
+        <span class="kw">int</span> v = <span class="kw">int</span>.Parse(m.Groups[<span class="nu">1</span>].Value) + <span class="nu">1</span>;
+        c = <span class="tp">Regex</span>.Replace(c, <span class="st">"VERSION\\s*=\\s*\"v\\d+\""</span>, <span class="st">"VERSION = \"v"</span>+v+<span class="st">"\""</span>);
+        <span class="tp">File</span>.WriteAllText(<span class="st">"Assets/Scripts/GameUI.cs"</span>, c);
+
+        <span class="cm">// ② Only test.unity scene / 只包含test场景</span>
+        <span class="kw">var</span> ss = <span class="kw">new</span> <span class="tp">List</span>&lt;<span class="tp">EditorBuildSettingsScene</span>&gt; {
+            <span class="kw">new</span> <span class="tp">EditorBuildSettingsScene</span>(<span class="st">"Assets/test.unity"</span>, <span class="kw">true</span>) };
+        <span class="tp">EditorBuildSettings</span>.scenes = ss.ToArray();
+
+        <span class="cm">// ③ Protect URP shaders / Shader防剥离</span>
+        AddShader(<span class="st">"Universal Render Pipeline/Lit"</span>);
+        AddShader(<span class="st">"Universal Render Pipeline/Unlit"</span>);
+
+        <span class="cm">// ④ Build / 执行构建</span>
+        <span class="tp">PlayerSettings</span>.WebGL.memorySize = <span class="nu">256</span>;
+        <span class="tp">PlayerSettings</span>.WebGL.compressionFormat = <span class="tp">WebGLCompressionFormat</span>.Disabled;
+        <span class="kw">string</span> p = <span class="tp">Path</span>.Combine(<span class="tp">Application</span>.dataPath, <span class="st">"../Build/WebGL"</span>);
+        <span class="tp">BuildPipeline</span>.BuildPlayer(ss.ToArray(), p, <span class="tp">BuildTarget</span>.WebGL, <span class="tp">BuildOptions</span>.None);
+    }
+    <span class="kw">static void</span> <span class="fn">AddShader</span>(<span class="kw">string</span> n) {
+        <span class="kw">var</span> s = <span class="tp">Shader</span>.Find(n); <span class="kw">if</span> (!s) <span class="kw">return</span>;
+        <span class="kw">var</span> g = <span class="kw">new</span> <span class="tp">SerializedObject</span>(<span class="tp">AssetDatabase</span>.LoadAssetAtPath&lt;<span class="tp">Object</span>&gt;(
+            <span class="st">"ProjectSettings/GraphicsSettings.asset"</span>));
+        <span class="kw">var</span> p = g.FindProperty(<span class="st">"m_AlwaysIncludedShaders"</span>);
+        <span class="kw">int</span> i = p.arraySize; p.InsertArrayElementAtIndex(i);
+        p.GetArrayElementAtIndex(i).objectReferenceValue = s;
+        g.ApplyModifiedPropertiesWithoutUndo();
+    }
+}</code></pre></div>
+
+<div class="card"><h4>GitHub Pages Deployment / 部署命令</h4>
+<pre><code><span class="cm"># 构建后执行 / ビルド後:</span>
+<span class="kw">cd</span> Build/WebGL
+<span class="kw">git init</span> && <span class="kw">git config</span> user.name <span class="st">"name"</span>
+<span class="kw">git remote add origin</span> https://github.com/user/repo.git
+<span class="kw">git add -A</span> && <span class="kw">git commit -m</span> <span class="st">"v1"</span>
+<span class="kw">git branch -M main</span> && <span class="kw">git push -f origin main</span>
+<span class="cm"># Settings > Pages > Source: main / root</span></code></pre></div>
+</section>
+
+</main>
+<footer>Unity コードリファレンス / Unity 代码参考 &mdash; test project &mdash; 2026</footer>
+<script>
+// ---- tab navigation ----
+const btns=document.querySelectorAll("#nav button");
+const secs=document.querySelectorAll("main section");
+btns.forEach(b=>b.addEventListener("click",()=>{
+  btns.forEach(x=>x.classList.remove("active"));
+  secs.forEach(x=>x.classList.remove("active"));
+  b.classList.add("active");
+  document.getElementById(b.dataset.section).classList.add("active");
+}));
+
+// ---- full bilingual split ----
+const LANG_KEY = 'unity-ref-lang';
+let currentLang = localStorage.getItem(LANG_KEY) || 'zh';
+
+function walkTextNodes(root) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  return nodes;
+}
+
+function splitBilingual(text) {
+  const idx = text.indexOf(' / ');
+  if (idx === -1) return null;
+  return { ja: text.slice(0, idx), zh: text.slice(idx + 3) };
+}
+
+function processAllText() {
+  const nodes = walkTextNodes(document.body);
+  nodes.forEach(node => {
+    if (node.parentElement.closest('script,style,pre code span,p script')) return;
+    if (node.parentElement.dataset && node.parentElement.dataset.split) return;
+    const parts = splitBilingual(node.textContent);
+    if (!parts) return;
+    const wrap = document.createElement('span');
+    wrap.innerHTML = '<span class="ja-only">' + parts.ja + '</span><span class="zh-only">' + parts.zh + '</span>';
+    wrap.dataset.split = '1';
+    node.replaceWith(wrap);
+  });
+}
+
+function applyLang(lang) {
+  currentLang = lang;
+  localStorage.setItem(LANG_KEY, lang);
+  document.querySelectorAll('#lang-zh,#lang-ja').forEach(b => {
+    const isActive = b.id === 'lang-' + lang;
+    b.style.background = isActive ? '#111' : 'var(--surface)';
+    b.style.color = isActive ? '#fff' : 'var(--text)';
+    b.style.fontWeight = isActive ? '600' : '400';
+  });
+  document.documentElement.style.setProperty('--show-ja', lang === 'ja' ? 'inline' : 'none');
+  document.documentElement.style.setProperty('--show-zh', lang === 'zh' ? 'inline' : 'none');
+  document.querySelectorAll('.ja-only').forEach(e => e.style.display = lang === 'ja' ? '' : 'none');
+  document.querySelectorAll('.zh-only').forEach(e => e.style.display = lang === 'zh' ? '' : 'none');
+}
+
+document.getElementById('lang-zh').addEventListener('click', () => applyLang('zh'));
+document.getElementById('lang-ja').addEventListener('click', () => applyLang('ja'));
+
+processAllText();
+applyLang(currentLang);
+</script>
+</body></html>
+

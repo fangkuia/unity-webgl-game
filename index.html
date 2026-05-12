@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>シンプルジャンプゲーム</title>
+<link rel="shortcut icon" href="TemplateData/favicon.ico">
+<link rel="stylesheet" href="TemplateData/style.css">
+<style>
+:root{--bg:#fafafa;--surface:#fff;--border:#e8e8e8;--text:#333;--muted:#888}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,'Segoe UI',-apple-system,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none}
+.game-wrap{max-width:960px;margin:0 auto;padding:32px 24px 0;display:flex;flex-direction:column;align-items:center}
+.game-head{text-align:center;margin-bottom:20px}
+.game-head h1{font-size:1.6em;font-weight:700;color:#111}
+.game-head p{color:var(--muted);font-size:.85em;margin-top:4px}
+#unity-container{position:relative!important;width:960px;height:600px;margin:0 auto;border:1px solid var(--border);border-radius:6px;overflow:hidden;background:#fff;left:auto!important;top:auto!important;transform:none!important}
+#unity-canvas{display:block;background:#231F20}
+#unity-loading-bar{position:absolute;bottom:0;left:0;right:0;top:auto!important;transform:none!important;background:#f5f5f5;padding:8px 16px;display:none}
+#unity-progress-bar-empty{height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+#unity-progress-bar-full{height:100%;background:#333;width:0;transition:width .2s}
+#unity-footer{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:#f5f5f5;border-top:1px solid var(--border)}
+#unity-build-title{font-size:.8em;color:var(--muted)}
+#unity-fullscreen-button{cursor:pointer;color:var(--muted);font-size:.85em;padding:2px 8px;border:1px solid var(--border);border-radius:4px;background:#fff}
+#unity-fullscreen-button:hover{color:#111}
+#unity-warning{position:absolute;top:0;left:0;right:0;z-index:10}
+.divider{max-width:960px;margin:32px auto 0;padding:0 24px;display:flex;align-items:center;gap:12px;color:var(--muted);font-size:.8em}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.ref-wrap{width:100%;background:var(--bg)}
+.ref-wrap iframe{width:100%;height:100vh;border:none;display:block}
+/* mobile overlay */
+#mobile-ctrl{display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:20;pointer-events:none}
+#mobile-ctrl.show{display:block}
+.mtop{position:absolute;top:8px;right:8px;display:flex;gap:6px;pointer-events:auto}
+.mtop .mbtn{width:36px;height:36px;font-size:.75em;border-radius:8px}
+.mbot{position:absolute;bottom:12px;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-end;padding:0 16px;pointer-events:none}
+.mbot>*{pointer-events:auto}
+.mbtn{background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.4);border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer}
+.mbtn:active{background:rgba(255,255,255,.45)}
+.m-dpad{display:grid;grid-template-columns:56px 56px 56px;grid-template-rows:56px 56px 56px;gap:3px}
+.m-dpad .mbtn{width:56px;height:56px;font-size:1.2em}
+.m-dpad .mempty{width:56px;height:56px;pointer-events:auto}
+.m-btn-jump{width:76px;height:76px;font-size:1em;font-weight:600;border-radius:50%}
+@media(max-width:1000px){#unity-container{width:100%;height:auto;aspect-ratio:960/600}.game-wrap{padding:16px 8px 0}}
+</style></head>
+<body>
+<div class="game-wrap">
+<div class="game-head"><h1>シンプルジャンプゲーム</h1><p>WASD 移動 &middot; ESC メニュー</p></div>
+<div id="unity-container" class="unity-desktop">
+<canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
+<div id="unity-loading-bar"><div id="unity-progress-bar-empty"><div id="unity-progress-bar-full"></div></div></div>
+<div id="unity-warning"></div>
+<div id="unity-footer"><div id="unity-build-title">SimpleJump</div><div id="unity-fullscreen-button">&#x26F6; Fullscreen</div></div>
+<div id="mobile-ctrl">
+<div class="mtop">
+<button class="mbtn" id="mb-menu">&#9776;</button>
+<button class="mbtn" id="mb-reset">R</button>
+<button class="mbtn" id="mb-full">&#x26F6;</button>
+</div>
+<div class="mbot">
+<div class="m-dpad">
+<div class="mempty"></div><button class="mbtn" id="mb-up">&#9650;</button><div class="mempty"></div>
+<button class="mbtn" id="mb-left">&#9664;</button><div class="mempty"></div><button class="mbtn" id="mb-right">&#9654;</button>
+<div class="mempty"></div><button class="mbtn" id="mb-down">&#9660;</button><div class="mempty"></div>
+</div>
+<button class="mbtn m-btn-jump" id="mb-jump">JUMP</button>
+</div>
+</div>
+</div></div>
+<div class="divider">CODE REFERENCE</div>
+<div class="ref-wrap"><iframe src="code.html" title="Unity Code Reference"></iframe></div>
+<script>
+      var canvas = document.querySelector("#unity-canvas");
+
+      // Shows a temporary message banner/ribbon for a few seconds, or
+      // a permanent error message on top of the canvas if type=='error'.
+      // If type=='warning', a yellow highlight color is used.
+      // Modify or remove this function to customize the visually presented
+      // way that non-critical warnings and error messages are presented to the
+      // user.
+      function unityShowBanner(msg, type) {
+        var warningBanner = document.querySelector("#unity-warning");
+        function updateBannerVisibility() {
+          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+        }
+        var div = document.createElement('div');
+        div.innerHTML = msg;
+        warningBanner.appendChild(div);
+        if (type == 'error') div.style = 'background: red; padding: 10px;';
+        else {
+          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
+          setTimeout(function() {
+            warningBanner.removeChild(div);
+            updateBannerVisibility();
+          }, 5000);
+        }
+        updateBannerVisibility();
+      }
+
+      var buildUrl = "Build";
+      var loaderUrl = buildUrl + "/WebGL.loader.js";
+      var config = {
+        arguments: [],
+        dataUrl: buildUrl + "/WebGL.data",
+        frameworkUrl: buildUrl + "/WebGL.framework.js",
+        codeUrl: buildUrl + "/WebGL.wasm",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "DefaultCompany",
+        productName: "SimpleJump",
+        productVersion: "1.0",
+        showBanner: unityShowBanner,
+        // errorHandler: function(err, url, line) {
+        //    alert("error " + err + " occurred at line " + line);
+        //    // Return 'true' if you handled this error and don't want Unity
+        //    // to process it further, 'false' otherwise.
+        //    return true;
+        // },
+      };
+
+      // By default, Unity keeps WebGL canvas render target size matched with
+      // the DOM size of the canvas element (scaled by window.devicePixelRatio)
+      // Set this to false if you want to decouple this synchronization from
+      // happening inside the engine, and you would instead like to size up
+      // the canvas DOM size and WebGL render target sizes yourself.
+      // config.matchWebGLToCanvasSize = false;
+
+      // If you would like all file writes inside Unity Application.persistentDataPath
+      // directory to automatically persist so that the contents are remembered when
+      // the user revisits the site the next time, uncomment the following line:
+      // config.autoSyncPersistentDataPath = true;
+      // This autosyncing is currently not the default behavior to avoid regressing
+      // existing user projects that might rely on the earlier manual
+      // JS_FileSystem_Sync() behavior, but in future Unity version, this will be
+      // expected to change.
+
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        // Mobile device style: fill the whole browser client area with the game canvas:
+
+        var meta = document.createElement('meta');
+        meta.name = 'viewport';
+        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+        document.getElementsByTagName('head')[0].appendChild(meta);
+        document.querySelector("#unity-container").className = "unity-mobile";
+        canvas.className = "unity-mobile";
+
+        // To lower canvas resolution on mobile devices to gain some
+        // performance, uncomment the following line:
+        // config.devicePixelRatio = 1;
+
+
+      } else {
+        // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
+        canvas.style.width = "960px";
+        canvas.style.height = "600px";
+      }
+
+      document.querySelector("#unity-loading-bar").style.display = "block";
+
+      var script = document.createElement("script");
+      script.src = loaderUrl;
+      script.onload = () => {
+        createUnityInstance(canvas, config, (progress) => {
+          document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
+              }).then((unityInstance) => { window.unityInstance = unityInstance;
+                document.querySelector("#unity-loading-bar").style.display = "none";
+                document.querySelector("#unity-fullscreen-button").onclick = () => {
+                  unityInstance.SetFullscreen(1);
+                };
+
+              }).catch((message) => {
+                alert(message);
+              });
+            };
+
+      document.body.appendChild(script);
+
+    </script>
+<script>
+(function(){
+  var isMobile = /iPhone|iPad|iPod|Android|webOS/i.test(navigator.userAgent) || ('ontouchstart' in window);
+  if(!isMobile) return;
+  document.getElementById('mobile-ctrl').classList.add('show');
+
+  // wait for Unity instance
+  var check = setInterval(function(){
+    if(typeof unityInstance !== 'undefined'){
+      clearInterval(check);
+      setupMobile(unityInstance);
+    }
+  }, 300);
+
+  function setupMobile(ui){
+    function on(id, down, up){
+      var el = document.getElementById(id);
+      if(!el) return;
+      el.addEventListener('pointerdown', function(e){ e.preventDefault(); e.stopPropagation(); ui.SendMessage('MobileInput', down); });
+      el.addEventListener('pointerup', function(e){ e.preventDefault(); e.stopPropagation(); ui.SendMessage('MobileInput', up); });
+      el.addEventListener('pointerleave', function(e){ e.preventDefault(); e.stopPropagation(); ui.SendMessage('MobileInput', up); });
+      el.addEventListener('touchstart', function(e){ e.preventDefault(); e.stopPropagation(); });
+    }
+    function tap(id, method){
+      var el = document.getElementById(id);
+      if(!el) return;
+      el.addEventListener('pointerdown', function(e){ e.preventDefault(); e.stopPropagation(); ui.SendMessage('MobileInput', method); });
+      el.addEventListener('touchstart', function(e){ e.preventDefault(); e.stopPropagation(); });
+    }
+    on('mb-left', 'OnLeftDown', 'OnLeftUp');
+    on('mb-right', 'OnRightDown', 'OnRightUp');
+    tap('mb-jump', 'OnJump');
+    tap('mb-menu', 'OnMenu');
+    tap('mb-reset', 'OnReset');
+    document.getElementById('mb-full').addEventListener('pointerdown', function(e){
+      e.preventDefault(); e.stopPropagation(); try { ui.SetFullscreen(1); } catch(_){} try { document.documentElement.requestFullscreen(); } catch(_){}
+    });
+    document.querySelectorAll('.mempty').forEach(function(el){
+      el.addEventListener('pointerdown', function(e){ e.preventDefault(); e.stopPropagation(); });
+      el.addEventListener('touchstart', function(e){ e.preventDefault(); e.stopPropagation(); });
+    });
+  }
+})();
+</script>
+
+</body>
+</html>
