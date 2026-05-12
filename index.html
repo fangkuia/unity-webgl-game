@@ -35,9 +35,8 @@ body{font-family:Inter,'Segoe UI',-apple-system,sans-serif;background:var(--bg);
 .mbot>*{pointer-events:auto}
 .mbtn{background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.4);border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer}
 .mbtn:active{background:rgba(255,255,255,.45)}
-.m-dpad{display:grid;grid-template-columns:56px 56px 56px;grid-template-rows:56px 56px 56px;gap:3px}
+.m-dpad{display:flex;gap:8px}
 .m-dpad .mbtn{width:56px;height:56px;font-size:1.2em}
-.m-dpad .mempty{width:56px;height:56px;pointer-events:auto}
 .m-btn-jump{width:76px;height:76px;font-size:1em;font-weight:600;border-radius:50%}
 @media(max-width:1000px){#unity-container{width:100%;height:auto;aspect-ratio:960/600}.game-wrap{padding:16px 8px 0}}
 </style></head>
@@ -57,9 +56,8 @@ body{font-family:Inter,'Segoe UI',-apple-system,sans-serif;background:var(--bg);
 </div>
 <div class="mbot">
 <div class="m-dpad">
-<div class="mempty"></div><button class="mbtn" id="mb-up">&#9650;</button><div class="mempty"></div>
-<button class="mbtn" id="mb-left">&#9664;</button><div class="mempty"></div><button class="mbtn" id="mb-right">&#9654;</button>
-<div class="mempty"></div><button class="mbtn" id="mb-down">&#9660;</button><div class="mempty"></div>
+<button class="mbtn" id="mb-left">&#9664;</button>
+<button class="mbtn" id="mb-right">&#9654;</button>
 </div>
 <button class="mbtn m-btn-jump" id="mb-jump">JUMP</button>
 </div>
@@ -209,10 +207,6 @@ body{font-family:Inter,'Segoe UI',-apple-system,sans-serif;background:var(--bg);
     tap('mb-reset', 'OnReset');
     document.getElementById('mb-full').addEventListener('pointerdown', function(e){
       e.preventDefault(); e.stopPropagation(); try { ui.SetFullscreen(1); } catch(_){} try { document.documentElement.requestFullscreen(); } catch(_){}
-    });
-    document.querySelectorAll('.mempty').forEach(function(el){
-      el.addEventListener('pointerdown', function(e){ e.preventDefault(); e.stopPropagation(); });
-      el.addEventListener('touchstart', function(e){ e.preventDefault(); e.stopPropagation(); });
     });
   }
 })();
